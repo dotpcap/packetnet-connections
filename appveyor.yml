@@ -1,0 +1,22 @@
+version: 1.0.{build}
+image: Visual Studio 2017
+environment:
+  configuration: Release
+before_build:
+- cmd: >-
+    nuget restore
+build:
+  publish_nuget: true
+  publish_nuget_symbols: true
+  include_nuget_references: true
+  verbosity: minimal
+artifacts:
+- path: PacketDotNetConnections/bin/Debug/packetnet-connections.*.nupkg
+deploy:
+- provider: NuGet
+  server: https://www.nuget.org/api/v2/package
+  api_key:
+    secure: z8sr2CvYsrqC+iyYfJ0L9ldCKwJaTAoBrDzoP76aCbdqn+/hRSPmfuY3XqTVLydU
+  on:
+    branch: master
+
