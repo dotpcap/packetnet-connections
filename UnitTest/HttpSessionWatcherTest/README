@@ -1,0 +1,12 @@
+------------------------------
+http_post_gziped_contents.pcap
+
+Http POST /ajax/chat/typ.php in packets 1 and 2. Http ok in packet 4.
+Http POST /ajax/chat/send.php in packet 6 and 7, gzipped response in packet 9.
+
+-----------------------------
+http_pipelined_session.pcap
+
+Generated this capture by enabling the network.http.pipelining setting in firefox via the 'about:config'
+page. Packets 34, 35, 36, 37 and 38 are an example of pipelined requests to the server, requests
+before waiting for a response.
