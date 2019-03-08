@@ -2,6 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackOnBuild>true</PackOnBuild>
+    <PackageLicenseUrl>https://github.com/chmorgan/packetnet-connections/blob/master/LICENSE</PackageLicenseUrl>
+    <Owners>Chris Morgan &lt;chmorgan@gmail.com</Owners>
+    <PackageProjectUrl>http://github.com/chmorgan/packetnet-connections</PackageProjectUrl>
+    <Summary>Supplement to Packet.Net</Summary>
+    <Title>PacketDotNet.Connections - Connection tracking for Packet.NET</Title>
+    <PackageId>packetnet-connections</PackageId>
+    <PackageVersion>1.0</PackageVersion>
+    <Authors>Chris Morgan &lt;chmorgan@gmail.com&gt;</Authors>
+    <Description>Supplement to Packet.Net that adds support for connection tracking</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -9,6 +19,7 @@
     <PackageReference Include="packetdotnet" Version="0.20.1" />
     <PackageReference Include="sharppcap" Version="4.6.0" />
     <PackageReference Include="sharpziplib" Version="1.1.0" />
+    <PackageReference Include="NuGet.Build.Packaging" Version="0.2.0" />
   </ItemGroup>
 
 </Project>
