@@ -37,7 +37,7 @@ namespace Test
             while((rawCapture = dev.GetNextPacket()) != null)
             {
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
-                var tcpPacket = p.Extract(typeof(TcpPacket)) as TcpPacket;
+                var tcpPacket = p.Extract<TcpPacket>();
 
                 Console.WriteLine("{0}", tcpPacket.ToString());
         #if false
@@ -139,7 +139,7 @@ namespace Test
             while((rawCapture = dev.GetNextPacket()) != null)
             {
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
-                var tcpPacket = p.Extract(typeof(TcpPacket)) as TcpPacket; 
+                var tcpPacket = p.Extract<TcpPacket>();
 
                 // we only want the 4th packet since that is the first packet with a payload
                 if(i == 4)
@@ -190,7 +190,7 @@ namespace Test
             while((rawCapture = dev.GetNextPacket()) != null)
             {
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
-                var tcpPacket = p.Extract(typeof(TcpPacket)) as TcpPacket;
+                var tcpPacket = p.Extract<TcpPacket>();
                 // we only want the 4th packet since that is the first packet with a payload
                 if(i == 4)
                 {
@@ -272,7 +272,7 @@ namespace Test
             while((rawCapture = dev.GetNextPacket()) != null)
             {
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
-                var tcpPacket = p.Extract(typeof(TcpPacket)) as TcpPacket;
+                var tcpPacket = p.Extract<TcpPacket>();
                 tcpStream.AppendPacket(tcpPacket);
                 i++;
             }
@@ -318,7 +318,7 @@ namespace Test
             while((rawCapture = dev.GetNextPacket()) != null)
             {
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
-                var tcpPacket = p.Extract(typeof(TcpPacket)) as TcpPacket;
+                var tcpPacket = p.Extract<TcpPacket>();
 
                 for(int x = 0; x < packetsToAppend; x++)
                 {

@@ -83,7 +83,7 @@ namespace PacketDotNet.Connections
             {
                 log.Debug("foundConnection == null");
 
-                if(tcp.Rst)
+                if(tcp.Reset)
                 {
                     log.Debug("creating new connection, RST flag is set");
                 } else

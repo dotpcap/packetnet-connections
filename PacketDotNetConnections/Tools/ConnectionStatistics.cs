@@ -147,7 +147,7 @@ namespace PacketDotNet.Connections.Tools
             // look up the ConnectionStatistics
             var connectionStatistics = connectionDictionary[connection];
 
-            if(tcp.Syn && !tcp.Ack)
+            if(tcp.Synchronize && !tcp.Acknowledgment)
             {
                 if(connectionStatistics.clientFlow != null)
                 {
@@ -157,7 +157,7 @@ namespace PacketDotNet.Connections.Tools
 
                 connectionStatistics.clientFlow = flow;
                 connectionStatistics.synTime = timeval;
-            } else if(tcp.Syn && tcp.Ack)
+            } else if(tcp.Synchronize && tcp.Acknowledgment)
             {
                 if(connectionStatistics.serverFlow != null)
                 {

@@ -182,7 +182,7 @@ namespace ConnectionsExample
             var packet = PacketDotNet.Packet.ParsePacket(e.Packet.LinkLayerType,
                                                          e.Packet.Data);
 
-            var tcpPacket = packet.Extract(typeof(TcpPacket)) as TcpPacket;
+            var tcpPacket = packet.Extract<TcpPacket>();
 
             // only pass tcp packets to the tcpConnectionManager
             if(tcpPacket != null)

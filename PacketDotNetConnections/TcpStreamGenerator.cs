@@ -409,7 +409,7 @@ namespace PacketDotNet.Connections
 
                 // if the size is zero and this is a syn packet then
                 // we need to adjust the size to be 1 according to the tcp protocol
-                if(newPacket.Syn)
+                if(newPacket.Synchronize)
                 {
                     size = 1;
                     LastContinuousSequence = seq;

@@ -16,8 +16,8 @@
 
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.8" />
-    <PackageReference Include="packetdotnet" Version="0.20.1" />
-    <PackageReference Include="sharppcap" Version="4.6.0" />
+    <PackageReference Include="packetdotnet" Version="1.0.1" />
+    <PackageReference Include="sharppcap" Version="4.6.1" />
     <PackageReference Include="sharpziplib" Version="1.1.0" />
     <PackageReference Include="NuGet.Build.Packaging" Version="0.2.0" />
   </ItemGroup>

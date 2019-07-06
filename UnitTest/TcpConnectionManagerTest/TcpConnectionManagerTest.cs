@@ -47,7 +47,7 @@ namespace Test
             while((rawCapture = dev.GetNextPacket()) != null)
             {
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
-                var tcpPacket = p.Extract(typeof(TcpPacket)) as TcpPacket;
+                var tcpPacket = p.Extract<TcpPacket>();
 
                 if(tcpPacket != null)
                 {
@@ -112,7 +112,7 @@ namespace Test
             while((rawCapture = dev.GetNextPacket()) != null)
             {
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
-                var tcpPacket = p.Extract(typeof(TcpPacket)) as TcpPacket;
+                var tcpPacket = p.Extract<TcpPacket>();
 
                 if(tcpPacket != null)
                 {

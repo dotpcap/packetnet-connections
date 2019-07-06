@@ -279,20 +279,20 @@ namespace PacketDotNet.Connections
             switch(ConnectionState)
             {
             case ConnectionStates.Open:
-                if(tcp.Fin && tcp.Ack)
+                if(tcp.Finished && tcp.Acknowledgment)
                 {
                     ConnectionState = ConnectionStates.WaitingForSecondFinAck;
                 }
                 break;
 
             case ConnectionStates.WaitingForSecondFinAck:
-                if(tcp.Fin && tcp.Ack)
+                if(tcp.Finished && tcp.Acknowledgment)
                 {
                     ConnectionState = ConnectionStates.WaitingForFinalAck;
                 }
                 break;
             case ConnectionStates.WaitingForFinalAck:
-                if(tcp.Ack)
+                if(tcp.Acknowledgment)
                 {
                     ConnectionState = ConnectionStates.Closed;
 

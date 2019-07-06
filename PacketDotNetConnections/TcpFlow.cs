@@ -86,7 +86,7 @@ namespace PacketDotNet.Connections
             }
 
             // look for disconnection
-            if(tcp.Fin == true)
+            if(tcp.Finished == true)
             {
                 IsOpen = false;
 

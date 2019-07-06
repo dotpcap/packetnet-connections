@@ -108,7 +108,7 @@ namespace HttpMonitorExample
             Console.WriteLine(e.Packet.ToString());
 #endif
             var p = PacketDotNet.Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
-            var tcpPacket = p.Extract(typeof(TcpPacket)) as TcpPacket;
+            var tcpPacket = p.Extract<TcpPacket>();
 
             if(tcpPacket == null)
                 return;

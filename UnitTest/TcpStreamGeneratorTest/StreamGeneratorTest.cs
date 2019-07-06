@@ -58,7 +58,7 @@ namespace Test
             while((rawCapture = dev.GetNextPacket()) != null)
             {
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
-                var tcpPacket = p.Extract(typeof(TcpPacket)) as TcpPacket;
+                var tcpPacket = p.Extract<TcpPacket>();
                 Console.WriteLine("tcpPacket.PayloadData.Length {0}", tcpPacket.PayloadData.Length);
 
                 connectionManager.ProcessPacket(rawCapture.Timeval, tcpPacket);
