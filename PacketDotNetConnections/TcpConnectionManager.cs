@@ -5,6 +5,7 @@
  * Commercial licensing available
  */
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using SharpPcap;
 
@@ -66,7 +67,10 @@ namespace PacketDotNet.Connections
 
             // attempt to find the connection and flow that
             // this packet belongs to
-            foreach(var c in Connections)
+            IEnumerable<TcpConnection> connsToIterate;
+            lock (Connections)
+                connsToIterate = Connections.ToArray();
+            foreach(var c in connsToIterate)
             {
                 foundFlow = c.IsMatch(tcp);
                 if(foundFlow != null)
@@ -102,7 +106,8 @@ namespace PacketDotNet.Connections
                 // send notification that a new connection was found
                 OnConnectionFound(connectionToUse);
 
-                Connections.Add(connectionToUse);
+                lock (Connections)
+                    Connections.Add(connectionToUse);
             } else
             {
                 // use the flows that we found
@@ -139,7 +144,8 @@ namespace PacketDotNet.Connections
                                                       TcpConnection.CloseType closeType)
         {
             // remove the connection from the list
-            Connections.Remove(connection);
+            lock(Connections)
+                Connections.Remove(connection);
         }
     }
 }
