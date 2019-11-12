@@ -423,8 +423,10 @@ namespace PacketDotNet.Connections.Http
             // the same message for the given TcpStream
             while(br.BaseStream.Position < br.BaseStream.Length)
             {
+                long oldPos = br.BaseStream.Position;
+
                 // if we haven't identified the monitor type yet, attempt to do so now
-                if(monitorType == HttpSessionWatcher.MonitorTypes.Unknown)
+                if (monitorType == HttpSessionWatcher.MonitorTypes.Unknown)
                 {
                     // attempt to process as a request
                     // NOTE: Must assign pendingRequest BEFORE calling ProcessBinaryReader()
@@ -471,6 +473,12 @@ namespace PacketDotNet.Connections.Http
                 if((status == HttpMessage.ProcessStatus.NeedMoreData)
                    ||
                    (status == HttpMessage.ProcessStatus.Complete))
+                {
+                    break;
+                }
+
+                // we're not advancing the stream due to an error, prevent an infinite loop here
+                if(oldPos == br.BaseStream.Position && status == HttpMessage.ProcessStatus.Error)
                 {
                     break;
                 }
