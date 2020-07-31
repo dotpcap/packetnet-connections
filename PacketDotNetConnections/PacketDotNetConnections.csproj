@@ -12,7 +12,7 @@
     <PackageVersion>1.0</PackageVersion>
     <Authors>Chris Morgan &lt;chmorgan@gmail.com&gt;</Authors>
     <Description>Supplement to Packet.Net that adds support for connection tracking</Description>
-    <ReleaseVersion>0.2</ReleaseVersion>
+    <Version>1.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
