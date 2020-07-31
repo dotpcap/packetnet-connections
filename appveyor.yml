@@ -16,7 +16,7 @@ deploy:
 - provider: NuGet
   server: https://www.nuget.org/api/v2/package
   api_key:
-    secure: z8sr2CvYsrqC+iyYfJ0L9ldCKwJaTAoBrDzoP76aCbdqn+/hRSPmfuY3XqTVLydU
+    secure: nsYJjcAn22+OTc4okjPSDGTlCcRN6PXoY3GtSlzZ6aNfXMSJStOCOHCvvTDcasaK
   on:
     branch: master
 
