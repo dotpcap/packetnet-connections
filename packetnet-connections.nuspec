@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>packetnet-connections</id>
+        <version>1.0.1</version>
+        <authors>Chris Morgan</authors>
+	      <owners>chmorgan</owners>
+        <licenseUrl>https://www.gnu.org/licenses/lgpl-3.0.en.html/</licenseUrl>
+        <projectUrl>https://github.com/chmorgan/packetnet-connections</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>A supplementary library to Packet.Net that provides classes to track and follow connections.</description>
+        <repository type="git" url="https://github.com/chmorgan/packetnet-connections" />
+    </metadata>
+	<files>
+		<file src="lib\**" target="lib/{framework name}[{version}]" />
+	</files>
+</package>
