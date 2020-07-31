@@ -12,6 +12,8 @@ build:
   publish_nuget_symbols: true
   include_nuget_references: true
   verbosity: minimal
+artifacts:
+- path: packetnet-connections*.nupkg
 deploy:
 - provider: NuGet
   server: https://www.nuget.org/api/v2/package
