@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PacketDotNetConnections", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CB56E1D6-9701-48F6-A23F-05784BD6A6E1}"
 	ProjectSection(SolutionItems) = preProject
-		packetnet-connections.nuspec = packetnet-connections.nuspec
+		PacketNetConnections.nuspec = PacketNetConnections.nuspec
 	EndProjectSection
 EndProject
 Global
