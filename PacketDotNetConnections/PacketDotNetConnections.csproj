@@ -9,7 +9,6 @@
     <Summary>Supplement to Packet.Net</Summary>
     <Title>PacketDotNet.Connections - Connection tracking for Packet.NET</Title>
     <PackageId>packetnet-connections</PackageId>
-    <PackageVersion>1.0</PackageVersion>
     <Authors>Chris Morgan &lt;chmorgan@gmail.com&gt;</Authors>
     <Description>Supplement to Packet.Net that adds support for connection tracking</Description>
     <AssemblyVersion>1.2.0.0</AssemblyVersion>
