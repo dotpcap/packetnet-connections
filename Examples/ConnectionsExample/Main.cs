@@ -1,7 +1,7 @@
 using System;
 using SharpPcap;
 using SharpPcap.LibPcap;
-using SharpPcap.WinPcap;
+using SharpPcap.Npcap;
 using PacketDotNet;
 using PacketDotNet.Connections;
 using PacketDotNet.Utils;
@@ -55,9 +55,9 @@ namespace ConnectionsExample
 
             // Open the device for capturing
             int readTimeoutMilliseconds = 1000;
-            if(device is WinPcapDevice)
+            if(device is NpcapDevice)
             {
-                var winPcap = device as WinPcapDevice;
+                var winPcap = device as NpcapDevice;
                 winPcap.Open(OpenFlags.DataTransferUdp | OpenFlags.NoCaptureLocal, readTimeoutMilliseconds);
             }
             else if (device is LibPcapLiveDevice)
