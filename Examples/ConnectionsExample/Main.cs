@@ -1,6 +1,5 @@
 using System;
 using SharpPcap;
-using SharpPcap.AirPcap;
 using SharpPcap.LibPcap;
 using SharpPcap.WinPcap;
 using PacketDotNet;
@@ -56,13 +55,7 @@ namespace ConnectionsExample
 
             // Open the device for capturing
             int readTimeoutMilliseconds = 1000;
-            if (device is AirPcapDevice)
-            {
-                // NOTE: AirPcap devices cannot disable local capture
-                var airPcap = device as AirPcapDevice;
-                airPcap.Open(OpenFlags.DataTransferUdp, readTimeoutMilliseconds);
-            }
-            else if(device is WinPcapDevice)
+            if(device is WinPcapDevice)
             {
                 var winPcap = device as WinPcapDevice;
                 winPcap.Open(OpenFlags.DataTransferUdp | OpenFlags.NoCaptureLocal, readTimeoutMilliseconds);
