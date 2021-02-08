@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <PackOnBuild>true</PackOnBuild>
     <PackageLicenseUrl>https://github.com/chmorgan/packetnet-connections/blob/master/LICENSE</PackageLicenseUrl>
     <Owners>Chris Morgan &lt;chmorgan@gmail.com</Owners>
@@ -13,12 +13,13 @@
     <Description>Supplement to Packet.Net that adds support for connection tracking</Description>
     <AssemblyVersion>1.2.0.0</AssemblyVersion>
     <Version>1.2.0</Version>
+    <ReleaseVersion>0.2</ReleaseVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.12" />
-    <PackageReference Include="packetdotnet" Version="1.1.1" />
-    <PackageReference Include="sharppcap" Version="5.3.0" />
+    <PackageReference Include="packetdotnet" Version="1.2.0" />
+    <PackageReference Include="sharppcap" Version="5.4.0" />
     <PackageReference Include="sharpziplib" Version="1.3.1" />
     <PackageReference Include="NuGet.Build.Packaging" Version="0.2.2" />
   </ItemGroup>
