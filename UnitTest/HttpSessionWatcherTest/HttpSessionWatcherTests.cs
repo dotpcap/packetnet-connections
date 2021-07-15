@@ -122,9 +122,11 @@ namespace Test
             // reset the expected message index at the start of the test run
             expectedMessageIndex = 0;
 
-            RawCapture rawCapture;
-            while((rawCapture = dev.GetNextPacket()) != null)
+            GetPacketStatus status;
+            PacketCapture e;
+            while((status = dev.GetNextPacket(out e)) == GetPacketStatus.PacketRead)
             {
+                var rawCapture = e.GetPacket();
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
 
                 var tcpPacket = p.Extract<TcpPacket>();

@@ -54,9 +54,11 @@ namespace Test
             dev.Open();
             Assert.True(dev != null, "failed to open " + captureFilename);
 
-            RawCapture rawCapture;
-            while((rawCapture = dev.GetNextPacket()) != null)
+            PacketCapture e;
+            GetPacketStatus status;
+            while((status = dev.GetNextPacket(out e)) == GetPacketStatus.PacketRead)
             {
+                var rawCapture = e.GetPacket();
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
                 var tcpPacket = p.Extract<TcpPacket>();
                 Console.WriteLine("tcpPacket.PayloadData.Length {0}", tcpPacket.PayloadData.Length);

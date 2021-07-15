@@ -39,9 +39,11 @@ namespace Test
             var tcpConnectionManager = new TcpConnectionManager();
             tcpConnectionManager.OnConnectionFound += HandleTcpConnectionManagerOnConnectionFound;
 
-            RawCapture rawCapture;
-            while((rawCapture = dev.GetNextPacket()) != null)
+            GetPacketStatus status;
+            PacketCapture e;
+            while((status = dev.GetNextPacket(out e)) == GetPacketStatus.PacketRead)
             {
+                var rawCapture = e.GetPacket();
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
                 var tcpPacket = p.Extract<TcpPacket>();
 

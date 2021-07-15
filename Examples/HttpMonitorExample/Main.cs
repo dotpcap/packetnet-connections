@@ -27,7 +27,7 @@ namespace HttpMonitorExample
         public static void Main(string[] args)
         {
             // Print SharpPcap version
-            string ver = SharpPcap.Version.VersionString;
+            var ver = SharpPcap.Pcap.SharpPcapVersion;
             Console.WriteLine("SharpPcap {0}", ver);
 
             // Retrieve the device list
@@ -69,7 +69,7 @@ namespace HttpMonitorExample
 
             // Open the device for capturing
             int readTimeoutMilliseconds = 1000;
-            device.Open(DeviceMode.Promiscuous, readTimeoutMilliseconds);
+            device.Open(DeviceModes.Promiscuous, readTimeoutMilliseconds);
 
             Console.WriteLine();
             Console.WriteLine("-- Listening on {0} {1}, hit 'Enter' to stop...",
@@ -98,7 +98,7 @@ namespace HttpMonitorExample
         /// <summary>
         /// Prints the time and length of each received packet
         /// </summary>
-        private static void device_OnPacketArrival(object sender, CaptureEventArgs e)
+        private static void device_OnPacketArrival(object sender, PacketCapture e)
         {
 #if false
             var time = e.Packet.Timeval.Date;
@@ -107,14 +107,15 @@ namespace HttpMonitorExample
                 time.Hour, time.Minute, time.Second, time.Millisecond, len);
             Console.WriteLine(e.Packet.ToString());
 #endif
-            var p = PacketDotNet.Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
+            var rawPacket = e.GetPacket();
+            var p = PacketDotNet.Packet.ParsePacket(rawPacket.LinkLayerType, rawPacket.Data);
             var tcpPacket = p.Extract<TcpPacket>();
 
             if(tcpPacket == null)
                 return;
 
             log.Debug("passing packet to TcpConnectionManager");
-            tcpConnectionManager.ProcessPacket(e.Packet.Timeval,
+            tcpConnectionManager.ProcessPacket(rawPacket.Timeval,
                                                tcpPacket);
         }
 

@@ -33,9 +33,11 @@ namespace Test
             TcpStream tcpStream = new TcpStream();
 
             int i = 1; // to match the packet numbering in wireshark
-            RawCapture rawCapture;
-            while((rawCapture = dev.GetNextPacket()) != null)
+            GetPacketStatus status;
+            PacketCapture e;
+            while((status = dev.GetNextPacket(out e)) == GetPacketStatus.PacketRead)
             {
+                var rawCapture = e.GetPacket();
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
                 var tcpPacket = p.Extract<TcpPacket>();
 
@@ -135,9 +137,11 @@ namespace Test
             TcpStream tcpStream = new TcpStream();
 
             int i = 1; // to match the packet numbering in wireshark
-            RawCapture rawCapture;
-            while((rawCapture = dev.GetNextPacket()) != null)
+            PacketCapture e;
+            GetPacketStatus status;
+            while((status = dev.GetNextPacket(out e)) == GetPacketStatus.PacketRead)
             {
+                var rawCapture = e.GetPacket();
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
                 var tcpPacket = p.Extract<TcpPacket>();
 
@@ -186,9 +190,11 @@ namespace Test
             TcpStream tcpStream = new TcpStream();
 
             int i = 1; // to match the packet numbering in wireshark
-            RawCapture rawCapture;
-            while((rawCapture = dev.GetNextPacket()) != null)
+            GetPacketStatus status;
+            PacketCapture e;
+            while((status = dev.GetNextPacket(out e)) == GetPacketStatus.PacketRead)
             {
+                var rawCapture = e.GetPacket();
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
                 var tcpPacket = p.Extract<TcpPacket>();
                 // we only want the 4th packet since that is the first packet with a payload
@@ -268,9 +274,11 @@ namespace Test
             TcpStream tcpStream = new TcpStream();
 
             int i = 1; // to match the packet numbering in wireshark
-            RawCapture rawCapture;
-            while((rawCapture = dev.GetNextPacket()) != null)
+            PacketCapture e;
+            GetPacketStatus status;
+            while((status = dev.GetNextPacket(out e)) == GetPacketStatus.PacketRead)
             {
+                var rawCapture = e.GetPacket();
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
                 var tcpPacket = p.Extract<TcpPacket>();
                 tcpStream.AppendPacket(tcpPacket);
@@ -313,10 +321,12 @@ namespace Test
             TcpStream tcpStream = new TcpStream();
 
             int i = 1; // to match the packet numbering in wireshark
-            RawCapture rawCapture;
+            GetPacketStatus status;
+            PacketCapture e;
             const int packetsToAppend = 100000;
-            while((rawCapture = dev.GetNextPacket()) != null)
+            while((status = dev.GetNextPacket(out e)) == GetPacketStatus.PacketRead)
             {
+                var rawCapture = e.GetPacket();
                 var p = Packet.ParsePacket(rawCapture.LinkLayerType, rawCapture.Data);
                 var tcpPacket = p.Extract<TcpPacket>();
 

@@ -1,7 +1,6 @@
 using System;
 using SharpPcap;
 using SharpPcap.LibPcap;
-using SharpPcap.Npcap;
 using PacketDotNet;
 using PacketDotNet.Connections;
 using PacketDotNet.Utils;
@@ -15,7 +14,7 @@ namespace ConnectionsExample
         public static void Main (string[] args)
         {
             // Print SharpPcap version
-            string ver = SharpPcap.Version.VersionString;
+            var ver = SharpPcap.Pcap.SharpPcapVersion;
             Console.WriteLine("SharpPcap {0}", ver);
 
             // Retrieve the device list
@@ -55,20 +54,7 @@ namespace ConnectionsExample
 
             // Open the device for capturing
             int readTimeoutMilliseconds = 1000;
-            if(device is NpcapDevice)
-            {
-                var winPcap = device as NpcapDevice;
-                winPcap.Open(OpenFlags.DataTransferUdp | OpenFlags.NoCaptureLocal, readTimeoutMilliseconds);
-            }
-            else if (device is LibPcapLiveDevice)
-            {
-                var livePcapDevice = device as LibPcapLiveDevice;
-                livePcapDevice.Open(DeviceMode.Promiscuous, readTimeoutMilliseconds);
-            }
-            else
-            {
-                throw new System.InvalidOperationException("unknown device type of " + device.GetType().ToString());
-            }
+            device.Open(mode: DeviceModes.Promiscuous | DeviceModes.DataTransferUdp | DeviceModes.NoCaptureLocal, read_timeout: readTimeoutMilliseconds);
 
             Console.WriteLine();
             Console.WriteLine("-- Listening on {0} {1}, hit 'Enter' to stop...",
@@ -162,7 +148,7 @@ namespace ConnectionsExample
         /// <summary>
         /// Prints the time and length of each received packet
         /// </summary>
-        private static void device_OnPacketArrival(object sender, CaptureEventArgs e)
+        private static void device_OnPacketArrival(object sender, PacketCapture e)
         {
 #if false
             var time = e.Packet.Timeval.Date;
@@ -171,16 +157,16 @@ namespace ConnectionsExample
                 time.Hour, time.Minute, time.Second, time.Millisecond, len);
             Console.WriteLine(e.Packet.ToString());
 #endif
-
-            var packet = PacketDotNet.Packet.ParsePacket(e.Packet.LinkLayerType,
-                                                         e.Packet.Data);
+            var rawPacket = e.GetPacket();
+            var packet = PacketDotNet.Packet.ParsePacket(rawPacket.LinkLayerType,
+                                                         rawPacket.Data);
 
             var tcpPacket = packet.Extract<TcpPacket>();
 
             // only pass tcp packets to the tcpConnectionManager
             if(tcpPacket != null)
             {
-                tcpConnectionManager.ProcessPacket(e.Packet.Timeval,
+                tcpConnectionManager.ProcessPacket(rawPacket.Timeval,
                                                    tcpPacket);
             }
         }
