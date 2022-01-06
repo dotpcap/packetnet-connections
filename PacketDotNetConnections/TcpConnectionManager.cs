@@ -104,7 +104,8 @@ namespace PacketDotNet.Connections
                 flowToUse = connectionToUse.FindFlow(tcp);
 
                 // send notification that a new connection was found
-                OnConnectionFound(connectionToUse);
+                if (OnConnectionFound != null)
+                    OnConnectionFound(connectionToUse);
 
                 lock (Connections)
                     Connections.Add(connectionToUse);
