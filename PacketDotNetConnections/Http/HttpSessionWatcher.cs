@@ -7,8 +7,8 @@
 #define ExceptionLessConstructor
 
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 
 namespace PacketDotNet.Connections.Http
 {
@@ -53,7 +53,7 @@ namespace PacketDotNet.Connections.Http
     /// </summary>
     public class HttpSessionWatcher
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);        
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         // NOTE: we have both a pending request and a status
         //       because http pipelining means that we can potentially
@@ -97,10 +97,10 @@ namespace PacketDotNet.Connections.Http
         // keep track of outstanding requests waiting for responses
         private Queue<HttpRequest> requestsWaitingForStatus;
 
-        /// <value>
+        /// <summary>
         /// cache the IsDebugEnabled property to reduce the run-time performance hit
         /// of log4net statements in this class
-        /// </value>
+        /// </summary>
         private static bool IsDebugEnabled = log.IsDebugEnabled;
 
 #if ExceptionLessConstructor
@@ -146,10 +146,11 @@ namespace PacketDotNet.Connections.Http
         private void SetTypeForTcpStreamGenerator(TcpStreamGenerator sg,
                                                   MonitorTypes monitorType)
         {
-            if(sg == streamGenerator0)
+            if (sg == streamGenerator0)
             {
                 MonitorTypeFlow0 = monitorType;
-            } else
+            }
+            else
             {
                 MonitorTypeFlow1 = monitorType;
             }
@@ -167,15 +168,16 @@ namespace PacketDotNet.Connections.Http
 
             private set
             {
-                if(value == MonitorTypeFlow0)
+                if (value == MonitorTypeFlow0)
                 {
                     return;
                 }
 
-                if(MonitorTypeFlow0 != HttpSessionWatcher.MonitorTypes.Unknown)
+                if (MonitorTypeFlow0 != HttpSessionWatcher.MonitorTypes.Unknown)
                 {
                     throw new System.InvalidOperationException("setting montior type multiple times");
-                } else
+                }
+                else
                 {
                     tcpStreamGeneratorToMonitorType[streamGenerator0] = value;
                     tcpStreamGeneratorToMonitorType[streamGenerator1] = GetOtherMonitorType(value);
@@ -195,13 +197,15 @@ namespace PacketDotNet.Connections.Http
         /// </returns>
         private static MonitorTypes GetOtherMonitorType(MonitorTypes monitorType)
         {
-            if(monitorType  == MonitorTypes.Client)
+            if (monitorType == MonitorTypes.Client)
             {
                 return MonitorTypes.Server;
-            } else if(monitorType == MonitorTypes.Server)
+            }
+            else if (monitorType == MonitorTypes.Server)
             {
                 return MonitorTypes.Client;
-            } else
+            }
+            else
             {
                 return MonitorTypes.Unknown;
             }
@@ -219,15 +223,16 @@ namespace PacketDotNet.Connections.Http
 
             private set
             {
-                if(value == MonitorTypeFlow1)
+                if (value == MonitorTypeFlow1)
                 {
                     return;
                 }
 
-                if(MonitorTypeFlow1 != HttpSessionWatcher.MonitorTypes.Unknown)
+                if (MonitorTypeFlow1 != HttpSessionWatcher.MonitorTypes.Unknown)
                 {
                     throw new System.InvalidOperationException("setting montior type multiple times");
-                } else
+                }
+                else
                 {
                     tcpStreamGeneratorToMonitorType[streamGenerator1] = value;
                     tcpStreamGeneratorToMonitorType[streamGenerator0] = GetOtherMonitorType(value);
@@ -236,7 +241,7 @@ namespace PacketDotNet.Connections.Http
         }
 
         /// <summary>
-        // NOTE: We only support starting a session monitor
+        /// NOTE: We only support starting a session monitor
         ///       if we catch a client request or server status
         ///       response at the head of the TcpStream.
         ///       We *could* pick things up in the middle but it would
@@ -260,7 +265,7 @@ namespace PacketDotNet.Connections.Http
                                   OnHttpStatusFoundDelegate OnHttpStatusFound,
                                   OnHttpWatcherErrorDelegate OnHttpWatcherError)
         {
-            if(IsDebugEnabled)
+            if (IsDebugEnabled)
                 log.Debug("");
 
             // attach stream generators to both flows of the given connection
@@ -280,72 +285,75 @@ namespace PacketDotNet.Connections.Http
             this.OnHttpWatcherError = OnHttpWatcherError;
         }
 
-        TcpStreamGenerator.CallbackReturnValue HandleStreamGeneratorOnCallback (TcpStreamGenerator tcpStreamGenerator,
+        TcpStreamGenerator.CallbackReturnValue HandleStreamGeneratorOnCallback(TcpStreamGenerator tcpStreamGenerator,
                                                                                 TcpStreamGenerator.CallbackCondition condition)
         {
-            switch(condition)
+            switch (condition)
             {
-            // stop monitoring if we have an error condition
-            case TcpStreamGenerator.CallbackCondition.SizeLimitReached:
-            case TcpStreamGenerator.CallbackCondition.OutOfRange:
-            case TcpStreamGenerator.CallbackCondition.ConnectionTimeout:
-            case TcpStreamGenerator.CallbackCondition.StreamError:
-                string errorString = string.Format("condition == {0}, shutting down monitors",
-                                                   condition);
-                log.Warn(errorString);
-                ShutDownMonitor(errorString);
-                return TcpStreamGenerator.CallbackReturnValue.StopMonitoring;
+                // stop monitoring if we have an error condition
+                case TcpStreamGenerator.CallbackCondition.SizeLimitReached:
+                case TcpStreamGenerator.CallbackCondition.OutOfRange:
+                case TcpStreamGenerator.CallbackCondition.ConnectionTimeout:
+                case TcpStreamGenerator.CallbackCondition.StreamError:
+                    string errorString = string.Format("condition == {0}, shutting down monitors",
+                                                       condition);
+                    log.Warn(errorString);
+                    ShutDownMonitor(errorString);
+                    return TcpStreamGenerator.CallbackReturnValue.StopMonitoring;
 
-            // early out if we don't have the next packet in sequence
-            case TcpStreamGenerator.CallbackCondition.OutOfSequence:
-                if(IsDebugEnabled)
-                {
-                    log.DebugFormat("condition {0} != TcpStreamMonitor.CallbackCondition.NextInSequence, returning ContinueMonitoring",
-                                    condition);
-                }
-                return TcpStreamGenerator.CallbackReturnValue.ContinueMonitoring;
+                // early out if we don't have the next packet in sequence
+                case TcpStreamGenerator.CallbackCondition.OutOfSequence:
+                    if (IsDebugEnabled)
+                    {
+                        log.DebugFormat("condition {0} != TcpStreamMonitor.CallbackCondition.NextInSequence, returning ContinueMonitoring",
+                                        condition);
+                    }
+                    return TcpStreamGenerator.CallbackReturnValue.ContinueMonitoring;
 
-            case TcpStreamGenerator.CallbackCondition.DuplicateDropped:
-                // nothing to do here, we dropped a duplicate entry
-                return TcpStreamGenerator.CallbackReturnValue.ContinueMonitoring;
+                case TcpStreamGenerator.CallbackCondition.DuplicateDropped:
+                    // nothing to do here, we dropped a duplicate entry
+                    return TcpStreamGenerator.CallbackReturnValue.ContinueMonitoring;
 
-            // normal case, nothing to do here but fall through
-            case TcpStreamGenerator.CallbackCondition.NextInSequence:
-                break;
+                // normal case, nothing to do here but fall through
+                case TcpStreamGenerator.CallbackCondition.NextInSequence:
+                    break;
 
-            default:
-                string error = "Unknown condition of '" + condition + "'";
-                throw new System.InvalidOperationException(error);
+                default:
+                    string error = "Unknown condition of '" + condition + "'";
+                    throw new System.InvalidOperationException(error);
             }
 
             // process the data in the TcpStream until we encounter
             // an error/exception case
             HttpMessage.ProcessStatus processStatus;
-            while(true)
+            while (true)
             {
                 processStatus = HandleTcpStreamGenerator(tcpStreamGenerator);
 
-                if(IsDebugEnabled)
+                if (IsDebugEnabled)
                     log.DebugFormat("processStatus is {0}", processStatus);
 
                 // if an error was detected we should stop monitoring the monitor
                 // with the error and delete the other monitor
-                if(processStatus == HttpMessage.ProcessStatus.Error)
+                if (processStatus == HttpMessage.ProcessStatus.Error)
                 {
                     var monitorType = tcpStreamGeneratorToMonitorType[tcpStreamGenerator];
                     string errorString = string.Format("Processing monitorType {0} got {1}, stopping monitor and deleting other monitor",
                                                        monitorType, processStatus);
                     ShutDownMonitor(errorString);
                     return TcpStreamGenerator.CallbackReturnValue.StopMonitoring;
-                } else if(processStatus == HttpMessage.ProcessStatus.NeedMoreData)
+                }
+                else if (processStatus == HttpMessage.ProcessStatus.NeedMoreData)
                 {
                     // not enough data remaining in the TcpStream so stop looping
                     // and ask the TcpStreamMonitor to continue monitoring
                     return TcpStreamGenerator.CallbackReturnValue.ContinueMonitoring;
-                } else if(processStatus == HttpMessage.ProcessStatus.Continue)
+                }
+                else if (processStatus == HttpMessage.ProcessStatus.Continue)
                 {
                     // just continue looping
-                } else if(processStatus == HttpMessage.ProcessStatus.Continue)
+                }
+                else if (processStatus == HttpMessage.ProcessStatus.Continue)
                 {
                     // just continue looping
                 }
@@ -361,7 +369,7 @@ namespace PacketDotNet.Connections.Http
         private void ShutDownMonitor(string errorString)
         {
             // if we have a error handler, call it
-            if(OnHttpWatcherError != null)
+            if (OnHttpWatcherError != null)
             {
                 OnHttpWatcherError(errorString);
             }
@@ -382,28 +390,29 @@ namespace PacketDotNet.Connections.Http
             var tcpStream = tcpStreamGenerator.tcpStream;
             var monitorType = tcpStreamGeneratorToMonitorType[tcpStreamGenerator];
 
-            if(IsDebugEnabled)
+            if (IsDebugEnabled)
                 log.DebugFormat("monitorType: {0}", monitorType);
 
             HttpMessage theMessage = null;
 
             // retrieve the pending message or create and assign a new one if there
             // is no pending message
-            if(monitorType == MonitorTypes.Client)
+            if (monitorType == MonitorTypes.Client)
             {
-                if(pendingRequest == null)
+                if (pendingRequest == null)
                 {
-                    if(IsDebugEnabled)
+                    if (IsDebugEnabled)
                         log.Debug("No pendingRequest, creating a new one");
                     pendingRequest = new HttpRequest();
                 }
 
                 theMessage = pendingRequest;
-            } else if(monitorType == MonitorTypes.Server)
+            }
+            else if (monitorType == MonitorTypes.Server)
             {
-                if(pendingStatus == null)
+                if (pendingStatus == null)
                 {
-                    if(IsDebugEnabled)
+                    if (IsDebugEnabled)
                         log.Debug("no pendingStatus, creating a new one");
                     pendingStatus = new HttpStatus();
                 }
@@ -421,7 +430,7 @@ namespace PacketDotNet.Connections.Http
             //
             // NOTE: We can process until we run out of data because we re-use
             // the same message for the given TcpStream
-            while(br.BaseStream.Position < br.BaseStream.Length)
+            while (br.BaseStream.Position < br.BaseStream.Length)
             {
                 long oldPos = br.BaseStream.Position;
 
@@ -433,7 +442,7 @@ namespace PacketDotNet.Connections.Http
                     // which may pass the object if processing completes
                     pendingRequest = new HttpRequest();
                     status = ProcessBinaryReader(pendingRequest, MonitorTypes.Client, br);
-                    if(status == HttpMessage.ProcessStatus.Error)
+                    if (status == HttpMessage.ProcessStatus.Error)
                     {
                         pendingRequest = null;
 
@@ -442,11 +451,12 @@ namespace PacketDotNet.Connections.Http
                         // which may pass the object if processing completes
                         pendingStatus = new HttpStatus();
                         status = ProcessBinaryReader(pendingStatus, MonitorTypes.Server, br);
-                        if(status == HttpMessage.ProcessStatus.Error)
+                        if (status == HttpMessage.ProcessStatus.Error)
                         {
                             pendingStatus = null;
                             return status;
-                        } else // success
+                        }
+                        else // success
                         {
                             theMessage = pendingStatus;
                             monitorType = HttpSessionWatcher.MonitorTypes.Server;
@@ -454,7 +464,8 @@ namespace PacketDotNet.Connections.Http
                             // assign the monitor type
                             SetTypeForTcpStreamGenerator(tcpStreamGenerator, monitorType);
                         }
-                    } else // success
+                    }
+                    else // success
                     {
                         theMessage = pendingRequest;
                         monitorType = HttpSessionWatcher.MonitorTypes.Client;
@@ -462,7 +473,8 @@ namespace PacketDotNet.Connections.Http
                         // assign the monitor type
                         SetTypeForTcpStreamGenerator(tcpStreamGenerator, monitorType);
                     }
-                } else // otherwise just process the data like normal
+                }
+                else // otherwise just process the data like normal
                 {
                     status = ProcessBinaryReader(theMessage, monitorType, br);
                 }
@@ -470,7 +482,7 @@ namespace PacketDotNet.Connections.Http
                 // stop processing if we need more data
                 // or if we are complete since we are done with this message and
                 // only by re-entering this function do we create a new one
-                if((status == HttpMessage.ProcessStatus.NeedMoreData)
+                if ((status == HttpMessage.ProcessStatus.NeedMoreData)
                    ||
                    (status == HttpMessage.ProcessStatus.Complete))
                 {
@@ -478,7 +490,7 @@ namespace PacketDotNet.Connections.Http
                 }
 
                 // we're not advancing the stream due to an error, prevent an infinite loop here
-                if(oldPos == br.BaseStream.Position && status == HttpMessage.ProcessStatus.Error)
+                if (oldPos == br.BaseStream.Position && status == HttpMessage.ProcessStatus.Error)
                 {
                     break;
                 }
@@ -495,26 +507,28 @@ namespace PacketDotNet.Connections.Http
 
             status = theMessage.Process(br);
 
-            if(IsDebugEnabled)
+            if (IsDebugEnabled)
                 log.DebugFormat("status == {0}", status);
 
-            if(status == HttpMessage.ProcessStatus.Error)
+            if (status == HttpMessage.ProcessStatus.Error)
             {
                 log.Debug("ProcessStatus.Error");
-            } else if(status == HttpMessage.ProcessStatus.Complete)
+            }
+            else if (status == HttpMessage.ProcessStatus.Complete)
             {
                 // send a completed notification to the appropriate handler
-                if(monitorType == MonitorTypes.Client)
+                if (monitorType == MonitorTypes.Client)
                 {
-                    if(OnHttpRequestFound != null)
+                    if (OnHttpRequestFound != null)
                     {
-                        if(IsDebugEnabled)
+                        if (IsDebugEnabled)
                             log.Debug("Calling OnHttpRequestFound() delegates");
 
                         try
                         {
                             OnHttpRequestFound(new HttpSessionWatcherRequestEventArgs(this, pendingRequest));
-                        } catch(System.Exception)
+                        }
+                        catch (System.Exception)
                         {
                             // drop all exceptions thrown from handlers, its not our issue
                         }
@@ -525,23 +539,25 @@ namespace PacketDotNet.Connections.Http
 
                     // clear out the pendingRequest since we finished with it
                     pendingRequest = null;
-                } else if(monitorType == MonitorTypes.Server)
+                }
+                else if (monitorType == MonitorTypes.Server)
                 {
                     // do we have any pending requests? if so we should
                     // dequeue one of them and assign it to the pendingStatus
                     // so the user can match the status with the request
-                    if(requestsWaitingForStatus.Count != 0)
+                    if (requestsWaitingForStatus.Count != 0)
                         pendingStatus.Request = requestsWaitingForStatus.Dequeue();
 
-                    if(OnHttpStatusFound != null)
+                    if (OnHttpStatusFound != null)
                     {
-                        if(IsDebugEnabled)
+                        if (IsDebugEnabled)
                             log.Debug("Calling OnHttpStatusFound() delegates");
 
                         try
                         {
                             OnHttpStatusFound(new HttpSessionWatcherStatusEventArgs(this, pendingStatus));
-                        } catch(System.Exception)
+                        }
+                        catch (System.Exception)
                         {
                             // drop all exceptions thrown from handlers, its not our issue
                         }
@@ -553,7 +569,8 @@ namespace PacketDotNet.Connections.Http
 
                 // return completion
                 status = HttpMessage.ProcessStatus.Complete;
-            } else if(status == HttpMessage.ProcessStatus.NeedMoreData)
+            }
+            else if (status == HttpMessage.ProcessStatus.NeedMoreData)
             {
                 // need more data, return with our current position
             }
