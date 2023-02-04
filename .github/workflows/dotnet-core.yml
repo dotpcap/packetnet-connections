@@ -47,7 +47,7 @@ jobs:
     - name: Install .net dependencies
       run: dotnet restore
     - name: Install winpcap
-      uses: crazy-max/ghaction-chocolatey@v1
+      uses: crazy-max/ghaction-chocolatey@v2
       with:
         args: install winpcap
     - name: Build
