@@ -24,6 +24,7 @@ namespace HttpMonitorExample
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         private static TcpConnectionManager tcpConnectionManager = new TcpConnectionManager();
+
         public static void Main(string[] args)
         {
             // Print SharpPcap version
@@ -87,7 +88,7 @@ namespace HttpMonitorExample
             Console.WriteLine("-- Capture stopped.");
         }
 
-        static void HandleTcpConnectionManagerOnConnectionFound (TcpConnection c)
+        static void HandleTcpConnectionManagerOnConnectionFound(TcpConnection c)
         {
             var httpSessionWatcher = new HttpSessionWatcher(c,
                                                             OnHttpRequestFound,
@@ -111,7 +112,7 @@ namespace HttpMonitorExample
             var p = PacketDotNet.Packet.ParsePacket(rawPacket.LinkLayerType, rawPacket.Data);
             var tcpPacket = p.Extract<TcpPacket>();
 
-            if(tcpPacket == null)
+            if (tcpPacket == null)
                 return;
 
             log.Debug("passing packet to TcpConnectionManager");
@@ -124,9 +125,14 @@ namespace HttpMonitorExample
             log.Debug("");
 
             // only display compressed messages
-            if((e.Request.ContentEncoding == HttpMessage.ContentEncodings.Deflate) ||
-               (e.Request.ContentEncoding == HttpMessage.ContentEncodings.Gzip))
+            if ((e.Request.ContentEncoding == HttpMessage.ContentEncodings.Deflate) ||
+               (e.Request.ContentEncoding == HttpMessage.ContentEncodings.Gzip) ||
+               (e.Request.ContentEncoding == HttpMessage.ContentEncodings.Brotli))
             {
+                if (e.Request.ContentEncoding == HttpMessage.ContentEncodings.Brotli)
+                {
+                    Console.WriteLine("Brottli compression");
+                }
                 //               log.Info(e.Request.ToString());
                 Console.WriteLine(e.Request.ToString());
             }
@@ -140,9 +146,14 @@ namespace HttpMonitorExample
             log.Debug("");
 
             // only display compressed messages
-            if((e.Status.ContentEncoding == HttpMessage.ContentEncodings.Deflate) ||
-               (e.Status.ContentEncoding == HttpMessage.ContentEncodings.Gzip))
+            if ((e.Status.ContentEncoding == HttpMessage.ContentEncodings.Deflate) ||
+               (e.Status.ContentEncoding == HttpMessage.ContentEncodings.Gzip) ||
+               (e.Status.ContentEncoding == HttpMessage.ContentEncodings.Brotli))
             {
+                if (e.Status.ContentEncoding == HttpMessage.ContentEncodings.Brotli)
+                {
+                    Console.WriteLine("Brottli compressed status");
+                }
                 //                log.Info(e.Status.ToString());
                 Console.WriteLine(e.Status.ToString());
             }

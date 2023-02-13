@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 
 namespace PacketDotNet.Connections.Http
 {
@@ -16,7 +17,7 @@ namespace PacketDotNet.Connections.Http
     /// </summary>
     public class HttpMessage
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);        
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         /// <summary>
         /// Key is the header field name, the key is the value
@@ -61,10 +62,10 @@ namespace PacketDotNet.Connections.Http
         /// </summary>
         public HttpVersions HttpVersion;
 
-        /// <value>
+        /// <summary>
         /// Cached contentLength value to avoid retrieving
         /// the value multiple times
-        /// </value>
+        /// </summary>
         private int? cachedContentLength;
 
         /// <summary>
@@ -76,13 +77,13 @@ namespace PacketDotNet.Connections.Http
             get
             {
                 // if we have a value, return it here
-                if(cachedContentLength.HasValue)
+                if (cachedContentLength.HasValue)
                     return cachedContentLength.Value;
 
-                if(Headers.ContainsKey("Content-Length"))
+                if (Headers.ContainsKey("Content-Length"))
                 {
                     int contentLength;
-                    if(!Int32.TryParse(Headers["Content-Length"], out contentLength))
+                    if (!Int32.TryParse(Headers["Content-Length"], out contentLength))
                     {
                         throw new HttpContentLengthParsingException("unable to parse " + Headers["Content-Length"] + " into a valid content length");
                     }
@@ -91,7 +92,8 @@ namespace PacketDotNet.Connections.Http
                     cachedContentLength = contentLength;
 
                     return contentLength;
-                } else
+                }
+                else
                 {
                     return -1;
                 }
@@ -116,7 +118,12 @@ namespace PacketDotNet.Connections.Http
             /// <summary>
             /// Deflated content
             /// </summary>
-            Deflate
+            Deflate,
+
+            /// <summary>
+            /// Brotli compressed content
+            /// </summary>
+            Brotli
         }
 
         /// <summary>
@@ -126,22 +133,28 @@ namespace PacketDotNet.Connections.Http
         {
             get
             {
-                if(Headers.ContainsKey("Content-Encoding"))
+                if (Headers.ContainsKey("Content-Encoding"))
                 {
                     string encodingType = Headers["Content-Encoding"];
-                    if(encodingType == "gzip")
+                    if (encodingType == "gzip")
                     {
                         return ContentEncodings.Gzip;
                     }
-                    else if(encodingType == "deflate")
+                    else if (encodingType == "deflate")
                     {
                         return ContentEncodings.Deflate;
-                    } else
+                    }
+                    else if (encodingType == "br")
+                    {
+                        return ContentEncodings.Brotli;
+                    }
+                    else
                     {
                         throw new System.InvalidOperationException("unknown Content-Encoding of "
                                                                    + encodingType);
                     }
-                } else
+                }
+                else
                 {
                     return ContentEncodings.None;
                 }
@@ -155,10 +168,11 @@ namespace PacketDotNet.Connections.Http
         {
             get
             {
-                if(Headers.ContainsKey("Transfer-Encoding"))
+                if (Headers.ContainsKey("Transfer-Encoding"))
                 {
                     return Headers["Transfer-Encoding"];
-                } else
+                }
+                else
                 {
                     return String.Empty;
                 }
@@ -257,26 +271,26 @@ namespace PacketDotNet.Connections.Http
         ///         where the internal state machine is waiting to resume when additional
         ///         data arrives
         /// </returns>
-        public ProcessStatus Process (BinaryReader br)
+        public ProcessStatus Process(BinaryReader br)
         {
-            if(IsDebugEnabled)
+            if (IsDebugEnabled)
                 log.Debug("");
 
             string line;
             HttpMessage.ProcessStatus processStatus;
 
-            while(true)
+            while (true)
             {
                 // the request response and header phases work in terms of lines,
                 // terminated by /r/n, this is different from the body phase that
                 // is a blob of bytes if "Content-Length" was set in the headers, or
                 // chunked mode if "Transfer-Encoding" was set in the headers
-                if((Phase == Phases.RequestResponse) ||
+                if ((Phase == Phases.RequestResponse) ||
                    (Phase == Phases.Headers) ||
                    (Phase == Phases.BodyChunkedLength) ||
                    (Phase == Phases.BodyChunkSeparator))
                 {
-                    if(IsDebugEnabled)
+                    if (IsDebugEnabled)
                         log.Debug("Line reading phase");
 
                     // save the starting position so we can restore if we don't have
@@ -287,7 +301,7 @@ namespace PacketDotNet.Connections.Http
                     var readNextLine
                         = BinaryReaderHelper.ReadNextLineFromBinaryReader(br, out line);
 
-                    if(IsDebugEnabled)
+                    if (IsDebugEnabled)
                     {
                         log.DebugFormat("readNextLine {0}, line of '{1}'",
                                         readNextLine, line);
@@ -296,16 +310,16 @@ namespace PacketDotNet.Connections.Http
                     // NOTE: Because we ensure that we have a string that was properly terminated by
                     //       crlf we can consider 'Needs`MoreData' cases inside of this if() to be
                     //       errors
-                    if(readNextLine == BinaryReaderHelper.ReadNextLineResponses.StringTerminatedByCrLf)
+                    if (readNextLine == BinaryReaderHelper.ReadNextLineResponses.StringTerminatedByCrLf)
                     {
-                        if(Phase == Phases.RequestResponse)
+                        if (Phase == Phases.RequestResponse)
                         {
-                            if(IsDebugEnabled)
+                            if (IsDebugEnabled)
                                 log.Debug("Phase == Phases.RequestResponse");
 
                             processStatus = ProcessRequestResponseFirstLineHandler(line);
 
-                            if(processStatus == ProcessStatus.Error)
+                            if (processStatus == ProcessStatus.Error)
                             {
                                 log.Debug("ProcessStatus.Error() from ProcessRequestResponseFirstLineHandler()");
 
@@ -313,26 +327,29 @@ namespace PacketDotNet.Connections.Http
                                 br.BaseStream.Position = startingPosition;
 
                                 return ProcessStatus.Error;
-                            } else if(processStatus == ProcessStatus.Complete)
+                            }
+                            else if (processStatus == ProcessStatus.Complete)
                             {
                                 log.Debug("status == ProcessStatus.Compete, moving to Phases.Headers");
 
                                 // done with the request/response first line handler
                                 // move to the next phase
                                 phase = Phases.Headers;
-                            } else
+                            }
+                            else
                             {
                                 // make sure to catch any unexpected status return values
                                 throw new System.InvalidOperationException("Unexpected processStatus of " + processStatus + " returned by ProcessRequestResponseFirstLineHandler()");
                             }
-                        } else if(Phase == Phases.Headers)
+                        }
+                        else if (Phase == Phases.Headers)
                         {
-                            if(IsDebugEnabled)
+                            if (IsDebugEnabled)
                                 log.Debug("Phase == Phases.Headers");
 
                             processStatus = ProcessHeaders(line);
 
-                            if(processStatus == ProcessStatus.Error)
+                            if (processStatus == ProcessStatus.Error)
                             {
                                 log.Debug("ProcessStatus.Error from ProcessHeaders(), moving back to startingPosition and returning ProcessStatus.Error");
 
@@ -340,61 +357,68 @@ namespace PacketDotNet.Connections.Http
                                 br.BaseStream.Position = startingPosition;
 
                                 return ProcessStatus.Error;
-                            } else if(processStatus == ProcessStatus.Complete)
+                            }
+                            else if (processStatus == ProcessStatus.Complete)
                             {
-                                if(IsDebugEnabled)
+                                if (IsDebugEnabled)
                                     log.Debug("Done with headers");
 
                                 // done with headers
                                 // if we have a content length then move to Phases.Body
                                 // otherwise we are done with the request
-                                if(ContentLength != -1)
+                                if (ContentLength != -1)
                                 {
-                                    if(IsDebugEnabled)
+                                    if (IsDebugEnabled)
                                     {
                                         log.DebugFormat("ContentLength is {0}, moving to Body phase",
                                                         ContentLength);
                                     }
 
                                     phase = Phases.Body;
-                                } else if(TransferEncoding == "chunked")
+                                }
+                                else if (TransferEncoding == "chunked")
                                 {
-                                    if(IsDebugEnabled)
+                                    if (IsDebugEnabled)
                                         log.Debug("TransferEncoding chunked, moving to Phases.BodyChunkedLength");
                                     phase = Phases.BodyChunkedLength;
-                                } else
+                                }
+                                else
                                 {
                                     // we are all done, no data follows the headers
-                                    if(IsDebugEnabled)
+                                    if (IsDebugEnabled)
                                         log.Debug("returning ProcessStatus.Complete");
                                     return ProcessStatus.Complete;
                                 }
-                            } else if(processStatus == ProcessStatus.Continue)
+                            }
+                            else if (processStatus == ProcessStatus.Continue)
                             {
-                                if(IsDebugEnabled)
+                                if (IsDebugEnabled)
                                     log.Debug("ProcessHeaders() returned 'Continue'");
-                            } else
+                            }
+                            else
                             {
                                 // make sure to catch any unexpected status return values
                                 throw new System.InvalidOperationException("Unexpected processStatus of " + processStatus + " returned by ProcessHeaders()");
                             }
-                        } else if(Phase == Phases.BodyChunkedLength)
+                        }
+                        else if (Phase == Phases.BodyChunkedLength)
                         {
-                            if(IsDebugEnabled)
+                            if (IsDebugEnabled)
                                 log.Debug("Phase == Phases.BodyChunkedLength");
 
                             processStatus = PhaseBodyChunkLength(line);
-                            if(processStatus != ProcessStatus.Continue)
+                            if (processStatus != ProcessStatus.Continue)
                             {
                                 return processStatus;
-                            }                    
-                        } else if(Phase == Phases.BodyChunkSeparator)
+                            }
+                        }
+                        else if (Phase == Phases.BodyChunkSeparator)
                         {
-                            if(IsDebugEnabled)
+                            if (IsDebugEnabled)
                                 log.Debug("Phase == Phases.BodyChunkSeparator");
 
                             // we expect the line to be empty
-                            if(line != String.Empty)
+                            if (line != String.Empty)
                             {
                                 log.Error("Expected a line that was String.Empty in the BodyChunkSeparator state but instead got '"
                                           + line + "'");
@@ -402,34 +426,37 @@ namespace PacketDotNet.Connections.Http
                             }
 
                             // if the ChunkLength is 0 then we are all done with the chunked data
-                            if(ChunkLength == 0)
+                            if (ChunkLength == 0)
                             {
                                 log.Debug("Found ChunkLength of zero, decoding content and returning ProcessStatus.Complete");
-                
+
                                 // we have the entire body, decode the content
                                 DecodeContent();
-                
+
                                 return ProcessStatus.Complete;
-                            } else // we have more chunks pending
+                            }
+                            else // we have more chunks pending
                             {
                                 // go back to the BodyChunkedLength phase
-                                if(IsDebugEnabled)
+                                if (IsDebugEnabled)
                                     log.Debug("Going back to Phases.BodyChunkedLength");
                                 phase = Phases.BodyChunkedLength;
                             }
                         }
-                    } else if(readNextLine == BinaryReaderHelper.ReadNextLineResponses.NonAsciiCharacterFound)
+                    }
+                    else if (readNextLine == BinaryReaderHelper.ReadNextLineResponses.NonAsciiCharacterFound)
                     {
-                        if(IsDebugEnabled)
+                        if (IsDebugEnabled)
                         {
                             log.DebugFormat("found a non-ascii character, this appears to be a binary stream, returning an error code");
                         }
 
                         return ProcessStatus.Error;
-                    } else if((readNextLine == BinaryReaderHelper.ReadNextLineResponses.StringAtEndOfStream) ||
+                    }
+                    else if ((readNextLine == BinaryReaderHelper.ReadNextLineResponses.StringAtEndOfStream) ||
                               (readNextLine == BinaryReaderHelper.ReadNextLineResponses.NeedMoreBytes))
                     {
-                        if(IsDebugEnabled)
+                        if (IsDebugEnabled)
                         {
                             log.DebugFormat("restoring the starting position and returning ProcessStatus.NeedMoreData",
                                       readNextLine);
@@ -441,7 +468,8 @@ namespace PacketDotNet.Connections.Http
                         // if we don't have enough data or if we have data but no crlf
                         // then report this
                         return ProcessStatus.NeedMoreData;
-                    } else
+                    }
+                    else
                     {
                         // Treat errors more seriously in DEBUG mode
 #if DEBUG
@@ -451,27 +479,30 @@ namespace PacketDotNet.Connections.Http
                         return ProcessStatus.Error;
 #endif
                     }
-                } else if(Phase == Phases.Body)
+                }
+                else if (Phase == Phases.Body)
                 {
-                    if(IsDebugEnabled)
+                    if (IsDebugEnabled)
                         log.Debug("Phase == Phases.Body");
 
                     processStatus = PhaseBody(br);
-                    if(processStatus != ProcessStatus.Continue)
+                    if (processStatus != ProcessStatus.Continue)
                     {
                         return processStatus;
                     }
-                } else if(Phase == Phases.BodyChunkData)
+                }
+                else if (Phase == Phases.BodyChunkData)
                 {
-                    if(IsDebugEnabled)
+                    if (IsDebugEnabled)
                         log.Debug("Phase == Phases.BodyChunkData");
 
                     processStatus = PhaseBodyChunkData(br);
-                    if(processStatus != ProcessStatus.Continue)
+                    if (processStatus != ProcessStatus.Continue)
                     {
                         return processStatus;
-                    }                    
-                } else
+                    }
+                }
+                else
                 {
                     throw new System.InvalidCastException("Unknown phase of " + Phase);
                 }
@@ -480,10 +511,10 @@ namespace PacketDotNet.Connections.Http
 
         private ProcessStatus PhaseBody(BinaryReader br)
         {
-            if(IsDebugEnabled)
+            if (IsDebugEnabled)
                 log.Debug("");
 
-            if(ContentLength == -1)
+            if (ContentLength == -1)
             {
                 throw new System.InvalidOperationException("ContentLength of -1 but we are in the Body phase");
             }
@@ -492,12 +523,12 @@ namespace PacketDotNet.Connections.Http
 
             // do we have all of the bytes we need for the body of this
             // http message?
-            if(ContentLength <= bytesInStream)
+            if (ContentLength <= bytesInStream)
             {
                 // read them into the body
                 Body = br.ReadBytes(ContentLength);
 
-                if(IsDebugEnabled)
+                if (IsDebugEnabled)
                     log.Debug("Read Body, decoding content and returning ProcessStatus.Complete");
 
                 // we have the entire body, decode the content
@@ -505,9 +536,10 @@ namespace PacketDotNet.Connections.Http
 
                 // indicate that we are complete
                 return ProcessStatus.Complete;
-            } else
+            }
+            else
             {
-                if(IsDebugEnabled)
+                if (IsDebugEnabled)
                 {
                     log.DebugFormat("ContentLength is {0} but we only have {1} bytes in the stream, returning {2}",
                                     ContentLength, bytesInStream, ProcessStatus.NeedMoreData);
@@ -518,7 +550,7 @@ namespace PacketDotNet.Connections.Http
 
         private ProcessStatus PhaseBodyChunkLength(string line)
         {
-            if(IsDebugEnabled)
+            if (IsDebugEnabled)
                 log.Debug("");
 
             // NOTE: take care to convert the value from hex format
@@ -529,13 +561,14 @@ namespace PacketDotNet.Connections.Http
                 line = line.Trim();
 
                 ChunkLength = Convert.ToInt32(line, 16);
-            } catch(System.Exception e)
+            }
+            catch (System.Exception e)
             {
                 throw new HttpChunkLengthParsingException("unable to parse '" + line + "' into a chunk length",
                                                           e);
             }
 
-            if(IsDebugEnabled)
+            if (IsDebugEnabled)
             {
                 log.Debug("ChunkLength is " + ChunkLength);
 
@@ -546,15 +579,15 @@ namespace PacketDotNet.Connections.Http
 
             return ProcessStatus.Continue;
         }
-        
+
         private ProcessStatus PhaseBodyChunkData(BinaryReader br)
         {
-            if(IsDebugEnabled)
+            if (IsDebugEnabled)
                 log.Debug("");
 
             // if our ChunkLength is 0 then this is the chunk that ends a series
             // of chunks, so we can simply go to the next phase
-            if(ChunkLength == 0)
+            if (ChunkLength == 0)
             {
                 phase = Phases.BodyChunkSeparator;
                 return ProcessStatus.Continue;
@@ -563,16 +596,17 @@ namespace PacketDotNet.Connections.Http
             long bytesInStream = br.BaseStream.Length - br.BaseStream.Position;
 
             // do we have all of the bytes we need for this particular chunk?
-            if(ChunkLength <= bytesInStream)
+            if (ChunkLength <= bytesInStream)
             {
                 // read this chunk
                 byte[] chunk = br.ReadBytes(ChunkLength);
 
                 // if we have no existing Body, use this chunk
-                if(Body == null)
+                if (Body == null)
                 {
                     Body = chunk;
-                } else
+                }
+                else
                 {
                     byte[] newBuffer = new byte[Body.Length + chunk.Length];
                     Array.Copy(Body, newBuffer, Body.Length);
@@ -582,14 +616,15 @@ namespace PacketDotNet.Connections.Http
 
                 // move to the final phase for this chunk, the /r/n separator
                 // that goes between chunks
-                if(IsDebugEnabled)
+                if (IsDebugEnabled)
                     log.Debug("Moving to Phases.BodyChunkSeparator");
                 phase = Phases.BodyChunkSeparator;
 
                 return ProcessStatus.Continue;
-            } else
+            }
+            else
             {
-                if(IsDebugEnabled)
+                if (IsDebugEnabled)
                 {
                     log.DebugFormat("ChunkLength is {0} but we only have {1} bytes in the stream, returning {2}",
                                     ChunkLength, bytesInStream, ProcessStatus.NeedMoreData);
@@ -612,7 +647,7 @@ namespace PacketDotNet.Connections.Http
             // the end of the headers is indicated by
             // an empty line, "\r\n" only but the \r\n is
             // stripped off by this point
-            if(line == String.Empty)
+            if (line == String.Empty)
                 return ProcessStatus.Complete;
 
             // header lines are in the format of:
@@ -624,10 +659,10 @@ namespace PacketDotNet.Connections.Http
 
             // check for the proper number of tokens
             int expectedTokensLength = 2;
-            if(tokens.Length != expectedTokensLength)
+            if (tokens.Length != expectedTokensLength)
             {
                 string errorString = String.Empty;
-                for(int i = 0; i < tokens.Length; i++)
+                for (int i = 0; i < tokens.Length; i++)
                 {
                     errorString += String.Format("tokens[{0}] = {1} ",
                                                  i, tokens[i]);
@@ -640,7 +675,7 @@ namespace PacketDotNet.Connections.Http
                 return ProcessStatus.Error;
             }
 
-            if(IsDebugEnabled)
+            if (IsDebugEnabled)
             {
                 log.DebugFormat("tokens[0] '{0}', tokens[1] '{1}'",
                                 tokens[0], tokens[1]);
@@ -672,7 +707,7 @@ namespace PacketDotNet.Connections.Http
         /// <returns>
         /// A <see cref="System.String"/>
         /// </returns>
-        public override string ToString ()
+        public override string ToString()
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
 
@@ -681,18 +716,18 @@ namespace PacketDotNet.Connections.Http
                                         ContentLength,
                                         ContentEncoding));
 
-            foreach(KeyValuePair<string, string> kvp in Headers)
+            foreach (KeyValuePair<string, string> kvp in Headers)
             {
                 sb.AppendLine(String.Format("'{0}' '{1}'", kvp.Key, kvp.Value));
             }
 
-            if(Body != null)
+            if (Body != null)
             {
                 sb.AppendLine("Body.Length " + Body.Length);
                 sb.AppendLine("Body:\n" + System.Text.ASCIIEncoding.ASCII.GetString(Body));
             }
 
-            if(CompressedBody != null)
+            if (CompressedBody != null)
             {
                 sb.AppendLine("CompressedBody.Length " + CompressedBody.Length);
             }
@@ -720,17 +755,17 @@ namespace PacketDotNet.Connections.Http
             // format is like "HTTP/1.1", so version comes after the slash
             string[] tokens = httpVersionString.Split('/');
 
-            if(tokens[0] != "HTTP")
+            if (tokens[0] != "HTTP")
             {
-                log.Info("Expected 'HTTP' got " + tokens[0]);                
+                log.Info("Expected 'HTTP' got " + tokens[0]);
                 return false;
             }
 
-            if(tokens[1] == "1.0")
+            if (tokens[1] == "1.0")
             {
                 httpVersion = HttpVersions.Http10;
             }
-            else if(tokens[1] == "1.1")
+            else if (tokens[1] == "1.1")
             {
                 httpVersion = HttpVersions.Http11;
             }
@@ -745,21 +780,27 @@ namespace PacketDotNet.Connections.Http
 
         private void DecodeContent()
         {
-            if(ContentEncoding == ContentEncodings.None)
+            if (ContentEncoding == ContentEncodings.None)
             {
                 return;
             }
 
             System.IO.Stream s;
-            if(ContentEncoding == ContentEncodings.Deflate)
+            if (ContentEncoding == ContentEncodings.Deflate)
             {
                 s = new ICSharpCode.SharpZipLib.Zip.Compression.Streams.InflaterInputStream(
                                         new System.IO.MemoryStream(Body),
                                         new ICSharpCode.SharpZipLib.Zip.Compression.Inflater(true));
-            } else if(ContentEncoding == ContentEncodings.Gzip)
+            }
+            else if (ContentEncoding == ContentEncodings.Gzip)
             {
                 s = new ICSharpCode.SharpZipLib.GZip.GZipInputStream(new System.IO.MemoryStream(Body));
-            } else
+            }
+            else if (ContentEncoding == ContentEncodings.Brotli)
+            {
+                s = new BrotliStream(new System.IO.MemoryStream(Body), CompressionMode.Decompress);
+            }
+            else
             {
                 throw new System.NotImplementedException("Unknown ContentEncoding of " + ContentEncoding);
             }
@@ -772,11 +813,11 @@ namespace PacketDotNet.Connections.Http
             do
             {
                 sizeRead = s.Read(uncompressedChunk, 0, readChunkSize);
-                if(sizeRead > 0)
+                if (sizeRead > 0)
                     ms.Write(uncompressedChunk, 0, sizeRead);
                 else
                     break; // break out of the while loop
-            } while(sizeRead > 0);
+            } while (sizeRead > 0);
 
             s.Close();
 
