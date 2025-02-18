@@ -6,6 +6,6 @@ before_build:
 - cmd: >-
     nuget restore
 
-    cinst WinPcap
+    choco install WinPcap
 build:
   publish_nuget: false
